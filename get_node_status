@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Jay Mashl, 12/16/2022
+
+# argument: 0 = print no header; 1 = print header
+
+h=$(hostname)
+cores=$( lscpu | grep ^Core | awk '{print $NF}')
+sockets=$( lscpu | grep ^Socket | awk '{print $NF}')
+total_cores=$(( cores * sockets ))
+total_threads=$(( total_cores * 2))
+ucount=$( uptime | awk '{print $(NF-6)}')
+load1m=$( uptime | awk '{print $(NF-2)}' | sed -e 's/,//')
+load5m=$( uptime | awk '{print $(NF-1)}' | sed -e 's/,//')
+load15m=$( uptime | awk '{print $(NF)}'| sed -e 's/,//')
+mem_avail=$(free -s 1 -h -c 1 | awk 'NR==2{print $NF}')
+mem_tot=$(free -s 1 -h -c 1| awk 'NR==2{print $2}')
+swap_avail=$(free -s 1 -h -c 1| tail -n +3 | awk '{print $NF}')
+swap_tot=$(free -s 1 -h -c 1 | tail -n +3 | awk '{print $2}')
+
+cpu_load1m=$load1m
+cpu_load1m_pct=$(echo "${load1m} / ${total_threads} * 100" | bc -l)
+cpu_avail1m=$(echo "scale=0; a=${total_threads} - ${load1m}; a=a/1; if (a < 0) 0.0 else (a + 0.0)" | bc -l)
+cpu_avail1m_pct=$(echo "${cpu_avail1m} / ${total_threads} * 100" | bc -l)
+
+function pad () {
+  # 1: string to pad; 2: integer padding length (pos. for left, neg for right)
+ [ "$#" -gt 1 ] && [ -n "$2" ] && printf "%$2.${2#-}s" "$1"
+}
+
+(
+if [ "$1" != "0" ] ; then
+	printf "%-12s  %9s  %9s  %9s  %12s  %12s  %5s  %19s\n"    "HOST"  "CPU_LOAD"  "CPU_AVAIL"   "CPU_AVAIL"  \
+    "MEM_AVAIL" "SWAP_AVAIL" "USERS" "LOAD(1/5/15m)"
+fi
+printf "%-12s  %8.1f%%  %8.1f%%  %5s /%2s  %5s /%5s  %5s /%5s  %5s  %5.1f /%5.1f /%5.1f\n"  \
+   ${h}  ${cpu_load1m_pct}  ${cpu_avail1m_pct}  \
+   $(pad ${cpu_avail1m} 5) $(pad ${total_threads} 2)  \
+   $(pad ${mem_avail} 5) $(pad ${mem_tot} 5)  \
+   $(pad ${swap_avail} 5) $(pad ${swap_tot} 5)  \
+   $(pad ${ucount} 5) \
+   ${load1m} ${load5m} ${load15m}
+)  > /home/cluster_status/status.${h}
