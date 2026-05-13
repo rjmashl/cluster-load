@@ -24,21 +24,25 @@ cpu_load1m_pct=$(echo "${load1m} / ${total_threads} * 100" | bc -l)
 cpu_avail1m=$(echo "scale=0; a=${total_threads} - ${load1m}; a=a/1; if (a < 0) 0.0 else (a + 0.0)" | bc -l)
 cpu_avail1m_pct=$(echo "${cpu_avail1m} / ${total_threads} * 100" | bc -l)
 
+now=$(date +"%m/%d_%I:%M%p")
+
 function pad () {
   # 1: string to pad; 2: integer padding length (pos. for left, neg for right)
  [ "$#" -gt 1 ] && [ -n "$2" ] && printf "%$2.${2#-}s" "$1"
 }
 
+
+
 (
 if [ "$1" != "0" ] ; then
-       printf "%-12s  %9s  %9s  %9s  %12s  %12s  %5s  %19s %12s\n"    "HOST"  "CPU_LOAD"  "CPU_AVAIL"   "CPU_AVAIL"  \
-    "MEM_AVAIL" "SWAP_AVAIL" "USERS" "LOAD(1/5/15m)" "UPTIME"
+    printf "%-12s  %9s  %9s  %9s  %12s  %12s  %5s  %19s %14s %12s\n"    "HOST"  "CPU_LOAD"  "CPU_AVAIL"   "CPU_AVAIL"  \
+    "MEM_AVAIL" "SWAP_AVAIL" "USERS" "LOAD(1/5/15m)" "  UPDATED" "UPTIME"
 fi
-printf "%-12s  %8.1f%%  %8.1f%%  %5s /%2s  %5s /%5s  %5s /%5s  %5s  %5.1f /%5.1f /%5.1f %12s\n"  \
+printf "%-12s  %8.1f%%  %8.1f%%  %5s /%2s  %5s /%5s  %5s /%5s  %5s  %5.1f /%5.1f /%5.1f %14s %12s\n"  \
    ${h}  ${cpu_load1m_pct}  ${cpu_avail1m_pct}  \
    $(pad ${cpu_avail1m} 5) $(pad ${total_threads} 2)  \
    $(pad ${mem_avail} 5) $(pad ${mem_tot} 5)  \
    $(pad ${swap_avail} 5) $(pad ${swap_tot} 5)  \
    $(pad ${ucount} 5) \
-   ${load1m} ${load5m} ${load15m} ${myuptime}
+   ${load1m} ${load5m} ${load15m} ${now} ${myuptime}
 )  > /home/cluster_status/status.${h}
