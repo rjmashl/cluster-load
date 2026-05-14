@@ -17,7 +17,7 @@ mem_avail=$(free -s 1 -h -c 1 | awk 'NR==2{print $NF}')
 mem_tot=$(free -s 1 -h -c 1| awk 'NR==2{print $2}')
 swap_avail=$(free -s 1 -h -c 1| tail -n +3 | awk '{print $NF}')
 swap_tot=$(free -s 1 -h -c 1 | tail -n +3 | awk '{print $2}')
-myuptime="$(uptime | awk '{print $3$4}' | sed -e 's/,//')"
+myuptime="$(uptime | awk '{if(NF==10){print $3}else{print $3$4}}' | sed -e 's/,//')"
 
 cpu_load1m=$load1m
 cpu_load1m_pct=$(echo "${load1m} / ${total_threads} * 100" | bc -l)
